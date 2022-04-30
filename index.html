@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Image server</title>
+    <style>
+      body {
+        max-width: 650px;
+        margin: 40px auto;
+        padding: 0 10px;
+        font: 18px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+          sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #ccc;
+          background: black;
+        }
+        a:link {
+          color: #5bf;
+        }
+        a:visited {
+          color: #ccf;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Welcome to the image server</h1>
+    <p>Use the url as a path traversal, and add image transform parameters to the query parameters.</p>
+    <h2>URL Query parameters</h2>
+    <table>
+      <tr>
+        <th>width</th>
+        <th>height</th>
+        <th>dither</th>
+      </tr>
+      <tr>
+        <td>u32</td>
+        <td>u32</td>
+        <td>EPaperSeven</td>
+      </tr>
+    </table>
+    <p>So for example, in order to send a query for a dithered image with a width and a height, you would query</p>
+    <code>http://localhost:8080/path/to/image.jpg?width=100&height=200&dither=EPaperSeven</code>
+  </body>
+</html>
