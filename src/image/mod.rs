@@ -1,5 +1,10 @@
-pub mod converter;
-use std::{io::{Cursor}, error::Error, path::Path};
+pub mod palette;
+use std::{
+    error::Error,
+    fs::{Metadata, File, self},
+    io::{Cursor, Read},
+    path::{Path, PathBuf},
+};
 
 use ::image::{
     imageops::dither,
@@ -7,9 +12,13 @@ use ::image::{
     io::Reader,
     ImageOutputFormat,
 };
+use actix_web::http::{
+    header::{ContentDisposition, ContentType, Encoding},
+    StatusCode,
+};
 use serde::Deserialize;
 
-use self::converter::{EPAPER_PALETTE, Palette};
+use self::palette::{Palette, EPAPER_PALETTE};
 
 #[derive(Debug, Deserialize)]
 pub enum DitherType {
@@ -23,52 +32,74 @@ pub struct ImageTransformOptions {
     dither: Option<DitherType>,
 }
 
-pub fn load_image<P>(path: P, image_transform_options: ImageTransformOptions) -> Result<Vec<u8>, Box<dyn Error>>
+pub fn load_image<P>(path: P, options: ImageTransformOptions) -> Result<Vec<u8>, Box<dyn Error>>
 where
     P: AsRef<Path>,
 {
+    if options.width.is_none() && options.height.is_none() && options.dither.is_none() {
+        let mut file = File::open(&path)?;
+        let metadata = fs::metadata(&path)?;
+        let mut buffer = vec![0; metadata.len() as usize];
+        file.read(&mut buffer)?;
+        return Ok(buffer);
+    }
+
     let mut img = Reader::open(path)?.decode()?.into_rgb8();
 
-    if image_transform_options.width.is_some() || image_transform_options.height.is_some() {
-        let width = image_transform_options
+    if options.width.is_some() || options.height.is_some() {
+        let width = options
             .width
-            .unwrap_or_else(|| img.width() * image_transform_options.height.unwrap() / img.height());
-        let height = image_transform_options
+            .unwrap_or_else(|| img.width() * options.height.unwrap() / img.height());
+        let height = options
             .height
             .unwrap_or_else(|| img.height() * width / img.width());
 
         // Crop the outer edges of the image if the ratio is not correct
-        let maybe_ratio = image_transform_options
+        let maybe_ratio = options
             .width
-            .and_then(|w| image_transform_options.height.map(|h| w as f32 / h as f32));
+            .and_then(|w| options.height.map(|h| w as f32 / h as f32));
         if let Some(ratio) = maybe_ratio {
             let img_ratio = img.width() as f32 / img.height() as f32;
             // Both width and height was definitely supplied here
             if ratio > img_ratio {
                 // wider, take width and then crop
-                let resize_height = (1.0 / img_ratio) * image_transform_options.width.unwrap() as f32;
+                let resize_height = (1.0 / img_ratio) * options.width.unwrap() as f32;
 
                 img = resize(
                     &img,
-                    image_transform_options.width.unwrap(),
+                    options.width.unwrap(),
                     resize_height as u32,
                     FilterType::Nearest,
                 );
 
-                let y = (resize_height as u32 - image_transform_options.height.unwrap()) / 2;
-                img = crop(&mut img, 0, y, image_transform_options.width.unwrap(), image_transform_options.height.unwrap()).to_image();
+                let y = (resize_height as u32 - options.height.unwrap()) / 2;
+                img = crop(
+                    &mut img,
+                    0,
+                    y,
+                    options.width.unwrap(),
+                    options.height.unwrap(),
+                )
+                .to_image();
             } else {
                 // taller (or same exact ratio), take width and then crop
-                let resize_width = img_ratio * image_transform_options.height.unwrap() as f32;
+                let resize_width = img_ratio * options.height.unwrap() as f32;
 
                 img = resize(
                     &img,
                     resize_width as u32,
-                    image_transform_options.height.unwrap(),
+                    options.height.unwrap(),
                     FilterType::Nearest,
                 );
-                let x = (resize_width as u32 - image_transform_options.width.unwrap()) / 2;
-                img = crop(&mut img, x, 0, image_transform_options.width.unwrap(), image_transform_options.height.unwrap()).to_image();
+                let x = (resize_width as u32 - options.width.unwrap()) / 2;
+                img = crop(
+                    &mut img,
+                    x,
+                    0,
+                    options.width.unwrap(),
+                    options.height.unwrap(),
+                )
+                .to_image();
             }
         } else {
             // Only one of either width or height was supplied
@@ -76,12 +107,12 @@ where
         }
     }
 
-    match image_transform_options.dither {
+    match options.dither {
         Some(DitherType::EPaperSeven) => {
             let palette = Palette::new(EPAPER_PALETTE);
             dither(&mut img, &palette);
         }
-        _ => {}
+        None => {}
     }
 
     // Write to buffer

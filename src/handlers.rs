@@ -1,7 +1,15 @@
-use actix_web::{get, http::header::ContentType, web::{Query, Data}, HttpRequest, HttpResponse, Responder};
+use actix_web::{
+    get,
+    http::header::ContentType,
+    web::{Data, Query},
+    HttpRequest, HttpResponse, Responder,
+};
 use image::image_dimensions;
 
-use crate::{image::{load_image, ImageTransformOptions}, WebContext};
+use crate::{
+    image::{load_image, ImageTransformOptions},
+    WebContext,
+};
 
 const VALID_IMAGE_EXTENSIONS: [&str; 4] = ["jpg", "jpeg", "png", "bmp"];
 
@@ -11,7 +19,11 @@ pub async fn hello(context: Data<WebContext>) -> impl Responder {
 }
 
 #[get("/{image_path:.*}")]
-pub async fn images(request: HttpRequest, query: Query<ImageTransformOptions>, context: Data<WebContext>) -> impl Responder {
+pub async fn images(
+    request: HttpRequest,
+    query: Query<ImageTransformOptions>,
+    context: Data<WebContext>,
+) -> impl Responder {
     let path: std::path::PathBuf = request.match_info().query("image_path").parse().unwrap();
     let built_path = context.path.join(&path);
 
@@ -31,7 +43,10 @@ pub async fn images(request: HttpRequest, query: Query<ImageTransformOptions>, c
 }
 
 #[get("/random")]
-pub async fn random(query: Query<ImageTransformOptions>, context: Data<WebContext>) -> impl Responder {
+pub async fn random(
+    query: Query<ImageTransformOptions>,
+    context: Data<WebContext>,
+) -> impl Responder {
     use rand::prelude::IteratorRandom;
     use walkdir::WalkDir;
 
@@ -42,21 +57,20 @@ pub async fn random(query: Query<ImageTransformOptions>, context: Data<WebContex
             if let Some(extension) = entry.path().extension() {
                 if let Some(e_unwrapped) = extension.to_str() {
                     if VALID_IMAGE_EXTENSIONS.contains(&e_unwrapped) {
-                        return Some(entry)
+                        return Some(entry);
                     }
                 }
-
             }
         }
         return None;
     });
-    
 
-    let file = files.choose(&mut rng).unwrap();
+    if let Some(file) = files.choose(&mut rng) {
+        let maybe_buffer = load_image(file.path(), query.into_inner()).unwrap();
 
-    let maybe_buffer = load_image(file.path(), query.into_inner()).unwrap();
-
-    return HttpResponse::Ok()
-        .insert_header(ContentType::png())
-        .body(maybe_buffer);
+        return HttpResponse::Ok()
+            .insert_header(ContentType::png())
+            .body(maybe_buffer);
+    }
+    return HttpResponse::NotFound().body("Not found");
 }

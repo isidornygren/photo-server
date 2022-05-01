@@ -8,7 +8,6 @@ use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use clap::Parser;
 use handlers::*;
 
-/// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
@@ -29,6 +28,7 @@ pub struct WebContext {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     HttpServer::new(move || {
         let logger = Logger::default();
