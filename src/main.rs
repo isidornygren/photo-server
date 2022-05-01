@@ -50,7 +50,7 @@ async fn main() -> std::io::Result<()> {
             .service(random)
             .service(images)
     })
-    .bind(("127.0.0.1", args.port))?
+    .bind(("0.0.0.0", args.port))?
     .run()
     .await
 }
