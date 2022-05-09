@@ -18,7 +18,7 @@ use actix_web::http::{
 };
 use serde::Deserialize;
 
-use self::palette::{Palette, EPAPER_PALETTE, EPAPER5IN65_PALETTE, STRICT_PALETTE};
+use self::palette::{Palette, EPAPER_PALETTE, WAVESHARE_PALETTE, STRICT_PALETTE};
 
 #[derive(Debug, Deserialize)]
 pub enum DitherType {
@@ -115,7 +115,7 @@ where
             dither(&mut img, &palette);
         },
         Some(DitherType::WaveShare) => {
-            let palette = Palette::new(EPAPER5IN65_PALETTE.into());
+            let palette = Palette::new(WAVESHARE_PALETTE.into());
             dither(&mut img, &palette);
         },
         Some(DitherType::EightBit) => {
