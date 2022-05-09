@@ -18,11 +18,12 @@ use actix_web::http::{
 };
 use serde::Deserialize;
 
-use self::palette::{Palette, EPAPER_PALETTE};
+use self::palette::{Palette, EPAPER_PALETTE, EPAPER5IN65_PALETTE};
 
 #[derive(Debug, Deserialize)]
 pub enum DitherType {
     EPaperSeven,
+    WaveShare
 }
 
 #[derive(Debug, Deserialize)]
@@ -109,7 +110,11 @@ where
 
     match options.dither {
         Some(DitherType::EPaperSeven) => {
-            let palette = Palette::new(EPAPER_PALETTE);
+            let palette = Palette::new(EPAPER_PALETTE.into());
+            dither(&mut img, &palette);
+        },
+        Some(DitherType::WaveShare) => {
+            let palette = Palette::new(EPAPER5IN65_PALETTE.into());
             dither(&mut img, &palette);
         }
         None => {}
