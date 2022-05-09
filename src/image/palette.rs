@@ -22,7 +22,7 @@ pub static WAVESHARE_PALETTE: [[u8; 3]; 7] = [
     [0, 0, 255],
     [255, 0, 0],
     [255, 255, 0],
-    [255, 127, 0]
+    [205, 184, 151]
 ];
 
 pub static STRICT_PALETTE: [[u8; 3]; 8] = [
