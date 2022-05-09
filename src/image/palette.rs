@@ -15,7 +15,7 @@ pub static EPAPER_PALETTE: [[u8; 3]; 8] = [
     [194, 164, 244],
 ];
 
-pub static EPAPER5IN65_PALETTE: [[u8; 3]; 9] = [
+pub static EPAPER5IN65_PALETTE: [[u8; 3]; 10] = [
     [4, 4, 252],
     [4, 252, 4],
     [252, 135, 4],
@@ -24,7 +24,8 @@ pub static EPAPER5IN65_PALETTE: [[u8; 3]; 9] = [
     [192, 160, 132],
     [0, 0, 0,],
     [64, 188, 132], // not sure about this one
-    [04, 04, 04] // or this one
+    [04, 04, 04], // or this one
+    [255, 255, 255]
 ];
 
 fn abs_diff(a: u8, b: u8) -> u8 {
