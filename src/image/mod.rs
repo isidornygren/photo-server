@@ -119,6 +119,6 @@ where
     let mut buffer: Vec<u8> = Vec::new();
     let mut writer = Cursor::new(&mut buffer);
 
-    img.write_to(&mut writer, ImageOutputFormat::Png)?;
+    img.write_to(&mut writer, ImageOutputFormat::Bmp)?;
     return Ok(buffer);
 }
