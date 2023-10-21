@@ -25,7 +25,7 @@ pub async fn images(
     context: Data<WebContext>,
 ) -> impl Responder {
     let path: std::path::PathBuf = request.match_info().query("image_path").parse().unwrap();
-    let built_path = context.path.join(&path);
+    let built_path = context.path.join(path);
 
     if !built_path.exists() {
         return HttpResponse::NotFound().body("Not found");
@@ -62,7 +62,7 @@ pub async fn random(
                 }
             }
         }
-        return None;
+        None
     });
 
     if let Some(file) = files.choose(&mut rng) {
@@ -72,5 +72,5 @@ pub async fn random(
             .insert_header(ContentType::png())
             .body(maybe_buffer);
     }
-    return HttpResponse::NotFound().body("Not found");
+    HttpResponse::NotFound().body("Not found")
 }

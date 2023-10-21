@@ -1,9 +1,9 @@
 pub mod palette;
 use std::{
     error::Error,
-    fs::{Metadata, File, self},
+    fs::{self, File},
     io::{Cursor, Read},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use ::image::{
@@ -12,19 +12,17 @@ use ::image::{
     io::Reader,
     ImageOutputFormat,
 };
-use actix_web::http::{
-    header::{ContentDisposition, ContentType, Encoding},
-    StatusCode,
-};
 use serde::Deserialize;
 
-use self::palette::{Palette, EPAPER_PALETTE, WAVESHARE_PALETTE, STRICT_PALETTE};
+use self::palette::{
+    Palette, EPAPER_PALETTE, STRICT_PALETTE, WAVESHARE_PALETTE, WAVESHARE_PALETTE_REAL,
+};
 
 #[derive(Debug, Deserialize)]
 pub enum DitherType {
     EPaperSeven,
     WaveShare,
-    EightBit
+    ThreeBit,
 }
 
 #[derive(Debug, Deserialize)]
@@ -42,7 +40,7 @@ where
         let mut file = File::open(&path)?;
         let metadata = fs::metadata(&path)?;
         let mut buffer = vec![0; metadata.len() as usize];
-        file.read(&mut buffer)?;
+        file.read_exact(&mut buffer)?;
         return Ok(buffer);
     }
 
@@ -105,21 +103,24 @@ where
             }
         } else {
             // Only one of either width or height was supplied
-            img = resize(&img, width as u32, height as u32, FilterType::Nearest);
+            img = resize(&img, width, height, FilterType::Nearest);
         }
     }
 
     match options.dither {
         Some(DitherType::EPaperSeven) => {
-            let palette = Palette::new(EPAPER_PALETTE.into());
+            let palette = Palette::new(EPAPER_PALETTE.into(), None);
             dither(&mut img, &palette);
-        },
+        }
         Some(DitherType::WaveShare) => {
-            let palette = Palette::new(WAVESHARE_PALETTE.into());
+            let palette = Palette::new(
+                WAVESHARE_PALETTE_REAL.into(),
+                Some(WAVESHARE_PALETTE.into()),
+            );
             dither(&mut img, &palette);
-        },
-        Some(DitherType::EightBit) => {
-            let palette = Palette::new(STRICT_PALETTE.into());
+        }
+        Some(DitherType::ThreeBit) => {
+            let palette = Palette::new(STRICT_PALETTE.into(), None);
             dither(&mut img, &palette);
         }
         None => {}
@@ -130,5 +131,5 @@ where
     let mut writer = Cursor::new(&mut buffer);
 
     img.write_to(&mut writer, ImageOutputFormat::Bmp)?;
-    return Ok(buffer);
+    Ok(buffer)
 }
