@@ -1,7 +1,7 @@
 mod handlers;
 mod image;
 
-use std::{path::{PathBuf}, fs::File, io::BufReader, io::Read};
+use std::{fs::File, io::BufReader, io::Read, path::PathBuf};
 
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 
@@ -22,7 +22,7 @@ struct Args {
 
 pub struct WebContext {
     path: PathBuf,
-    index: String
+    index: String,
 }
 
 #[actix_web::main]
@@ -37,10 +37,10 @@ async fn main() -> std::io::Result<()> {
         let mut buf_reader = BufReader::new(file);
         let mut index = String::new();
         buf_reader.read_to_string(&mut index).unwrap();
-        
+
         let web_context = Data::new(WebContext {
             path: PathBuf::from(shellexpand::tilde(&args.image_path).into_owned()),
-            index
+            index,
         });
 
         App::new()
