@@ -33,14 +33,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let logger = Logger::default();
         // Load up the index site in memory so we don't have to access it constantly
-        let file = File::open("index.html").unwrap();
-        let mut buf_reader = BufReader::new(file);
-        let mut index = String::new();
-        buf_reader.read_to_string(&mut index).unwrap();
+        let index = include_str!("../index.html");
 
         let web_context = Data::new(WebContext {
             path: PathBuf::from(shellexpand::tilde(&args.image_path).into_owned()),
-            index,
+            index: index.to_string(),
         });
 
         App::new()
