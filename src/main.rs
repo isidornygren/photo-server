@@ -1,12 +1,20 @@
+#![warn(
+    clippy::all,
+    // clippy::restriction,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo
+)]
+#[allow(clippy::unused_async)]
 mod handlers;
 mod image;
 
-use std::{fs::File, io::BufReader, io::Read, path::PathBuf};
+use std::path::PathBuf;
 
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 
 use clap::Parser;
-use handlers::*;
+use handlers::{hello, images, random};
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]

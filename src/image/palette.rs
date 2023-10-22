@@ -22,23 +22,6 @@ pub static WAVESHARE_PALETTE: [[u8; 3]; 7] = [
     [200, 180, 160],
 ];
 
-// rgb(75,75,80)
-// rgb(200,200,150)
-// rgb(97,115,85)
-// rgb(95,85,110)
-// rgb(175,75,59)
-// rgb(200,160,60)
-// rgb(200,180,160)
-
-// New colours
-// rgb(50,50,80)
-// rgb(225,225,225)
-// rgb(87,130,75)
-// rgb(65,65,150)
-// rgb(175,45,39)
-// rgb(220,200,110)
-// rgb(225,225,195)
-
 pub static WAVESHARE_PALETTE_REAL: [[u8; 3]; 7] = [
     [50, 50, 80],    // black
     [225, 225, 225], // white
@@ -75,13 +58,16 @@ pub struct Palette {
 }
 
 impl Palette {
-    pub fn new(input: Vec<[u8; 3]>, index_p: Option<Vec<[u8; 3]>>) -> Self {
+    pub fn new(input: &[[u8; 3]], index_p: Option<Vec<[u8; 3]>>) -> Self {
         Self {
-            p: input.iter().map(|color| *Rgb::from_slice(color)).collect(),
+            p: input
+                .iter()
+                .map(|colour| *Rgb::from_slice(colour))
+                .collect(),
             index_p: index_p.map(|palette| {
                 palette
                     .iter()
-                    .map(|color| *Rgb::from_slice(color))
+                    .map(|colour| *Rgb::from_slice(colour))
                     .collect()
             }),
         }
@@ -102,6 +88,7 @@ impl ColorMap for Palette {
                     + abs_diff(color[2], c[2]) as usize
             })
             .collect();
+
         return distance_vec
             .iter()
             .enumerate()
@@ -113,13 +100,9 @@ impl ColorMap for Palette {
     #[inline(always)]
     fn lookup(&self, index: usize) -> Option<Rgb<u8>> {
         if let Some(palette) = &self.index_p {
-            return palette.get(index).cloned();
+            return palette.get(index).copied();
         }
-        return self.p.get(index).cloned();
-    }
-
-    fn has_lookup(&self) -> bool {
-        true
+        return self.p.get(index).copied();
     }
 
     #[inline(always)]
@@ -127,5 +110,9 @@ impl ColorMap for Palette {
         if let Some(new_color) = self.lookup(self.index_of(color)) {
             color.0 = new_color.0;
         }
+    }
+
+    fn has_lookup(&self) -> bool {
+        true
     }
 }

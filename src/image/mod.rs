@@ -32,14 +32,14 @@ pub struct ImageTransformOptions {
     dither: Option<DitherType>,
 }
 
-pub fn load_image<P>(path: P, options: ImageTransformOptions) -> Result<Vec<u8>, Box<dyn Error>>
+pub fn load_image<P>(path: P, options: &ImageTransformOptions) -> Result<Vec<u8>, Box<dyn Error>>
 where
     P: AsRef<Path>,
 {
     if options.width.is_none() && options.height.is_none() && options.dither.is_none() {
         let mut file = File::open(&path)?;
         let metadata = fs::metadata(&path)?;
-        let mut buffer = vec![0; metadata.len() as usize];
+        let mut buffer = vec![0; usize::try_from(metadata.len()).unwrap()];
         file.read_exact(&mut buffer)?;
         return Ok(buffer);
     }
@@ -57,13 +57,13 @@ where
         // Crop the outer edges of the image if the ratio is not correct
         let maybe_ratio = options
             .width
-            .and_then(|w| options.height.map(|h| w as f32 / h as f32));
+            .and_then(|w| options.height.map(|h| f64::from(w) / f64::from(h)));
         if let Some(ratio) = maybe_ratio {
-            let img_ratio = img.width() as f32 / img.height() as f32;
+            let img_ratio = f64::from(img.width()) / f64::from(img.height());
             // Both width and height was definitely supplied here
             if ratio > img_ratio {
                 // wider, take width and then crop
-                let resize_height = (1.0 / img_ratio) * options.width.unwrap() as f32;
+                let resize_height = (1.0 / img_ratio) * f64::from(options.width.unwrap());
 
                 img = resize(
                     &img,
@@ -83,7 +83,7 @@ where
                 .to_image();
             } else {
                 // taller (or same exact ratio), take width and then crop
-                let resize_width = img_ratio * options.height.unwrap() as f32;
+                let resize_width = img_ratio * f64::from(options.height.unwrap());
 
                 img = resize(
                     &img,
@@ -109,18 +109,15 @@ where
 
     match options.dither {
         Some(DitherType::EPaperSeven) => {
-            let palette = Palette::new(EPAPER_PALETTE.into(), None);
+            let palette = Palette::new(&EPAPER_PALETTE, None);
             dither(&mut img, &palette);
         }
         Some(DitherType::WaveShare) => {
-            let palette = Palette::new(
-                WAVESHARE_PALETTE_REAL.into(),
-                Some(WAVESHARE_PALETTE.into()),
-            );
+            let palette = Palette::new(&WAVESHARE_PALETTE_REAL, Some(WAVESHARE_PALETTE.into()));
             dither(&mut img, &palette);
         }
         Some(DitherType::ThreeBit) => {
-            let palette = Palette::new(STRICT_PALETTE.into(), None);
+            let palette = Palette::new(&STRICT_PALETTE, None);
             dither(&mut img, &palette);
         }
         None => {}

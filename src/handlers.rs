@@ -35,7 +35,7 @@ pub async fn images(
         return HttpResponse::BadRequest().body("File not an image");
     }
 
-    let maybe_buffer = load_image(&built_path, query.into_inner()).unwrap();
+    let maybe_buffer = load_image(&built_path, &query.into_inner()).unwrap();
 
     return HttpResponse::Ok()
         .insert_header(ContentType::png())
@@ -66,7 +66,7 @@ pub async fn random(
     });
 
     if let Some(file) = files.choose(&mut rng) {
-        let maybe_buffer = load_image(file.path(), query.into_inner()).unwrap();
+        let maybe_buffer = load_image(file.path(), &query.into_inner()).unwrap();
 
         return HttpResponse::Ok()
             .insert_header(ContentType::png())
